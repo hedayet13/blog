@@ -1,13 +1,14 @@
 import 'package:blog/firstScreen.dart';
+import 'package:blog/signUp.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:blog/authentication/auth.dart';
 
 
 void main() {
   runApp(MyApp());
 }
-
 
 class MyApp extends StatelessWidget {
   @override
@@ -91,7 +92,7 @@ class _loginPageState extends State<loginPage> {
                   ),
                   RaisedButton(
                     onPressed: () {
-                    Navigator.push(context, MaterialPageRoute(builder: (context)=>FirstScreen()));
+                      Navigator.push(context, MaterialPageRoute(builder: (context)=>SignUpPage()));
                   },
 
                     padding: EdgeInsets.symmetric(vertical: 15, horizontal: 80),
@@ -111,8 +112,8 @@ class _loginPageState extends State<loginPage> {
         ),
         floatingActionButton: FloatingActionButton.extended(
           onPressed:() {
-
-             },
+            handleSignIn().then((FirebaseUser user) => print(user)).catchError((e)=>print(e));
+          },
           label: Text("Google Sign In",) ,
           icon: Icon(Icons.mail),
           ),
