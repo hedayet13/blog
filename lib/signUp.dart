@@ -1,57 +1,32 @@
 
+import 'package:blog/firstScreen.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
+final FirebaseAuth _auth = FirebaseAuth.instance;
+final Firestore _firestore = Firestore.instance;
 
+class SignUpPage extends StatefulWidget {
+  @override
+  _SignUpPageState createState() => _SignUpPageState();
+}
 
-class SignUpPage extends StatelessWidget {
-  final String fullname;
-  final String email;
-  final String age;
-  final String password;
+class _SignUpPageState extends State<SignUpPage> {
 
-  SignUpPage(this.fullname,this.email,this.age,this.password);
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  bool _success;
+  String _userEmail;
+  final TextEditingController _fullName = TextEditingController();
+  final TextEditingController _sex = TextEditingController();
+  
+
 
   @override
   Widget build(BuildContext context) {
-
-    Firestore.instance.collection('users').document()
-    .setData({'full_name':'full_name','email':'email','age':'age','password':'password'});
-
-    CollectionReference users =Firestore.instance.collection('users');
-    Future<void> addUser(){
-
-      return users.add({
-        'full_name':fullname,
-        'email':email,
-        'age': age,
-        'password':password
-      })
-      .then((value) => print("user Added"))
-      .catchError((e)=>print("Failed"));
-
-    }
-
-//    return StreamBuilder<QuerySnapshot>(
-//        stream: Firestore.instance.collection('users').snapshots(),
-//        builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot){
-//          if (snapshot.hasError)
-//            return new Text('Error: ${snapshot.error}');
-//          switch(snapshot.connectionState){
-//            case ConnectionState.waiting:return new Text('Loading');
-//            default:
-//              return new ListView(
-//                children: snapshot.data.documents.map((DocumentSnapshot document){
-//                  return new ListTile(
-//                    title: new,
-//                  )
-//                })
-//              );
-//          }
-//        });
-
-
     return Scaffold(
       appBar: AppBar(
         title: Text('Give us valid Information'),
@@ -60,49 +35,102 @@ class SignUpPage extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.all(15.0),
           child: Container(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                TextFormField(
-                  decoration: InputDecoration(
-                    icon: Icon(Icons.account_box),
-                    labelText: 'Full Name'
+            child: Form(
+              key: _formKey,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  TextFormField(
+                    controller: _fullName,
+                    decoration: InputDecoration(
+                      icon:Icon(Icons.perm_identity),
+                      labelText: 'Fullname'
+                    ),
                   ),
-                ),
-                TextFormField(
-                  decoration: InputDecoration(
-                      icon: Icon(Icons.recent_actors),
-                      labelText: 'Age'
+                  TextFormField(
+                    controller: _sex,
+                    decoration: InputDecoration(
+                        icon:Icon(Icons.group),
+                        labelText: 'Age'
+                    ),
                   ),
-                ),
-                TextFormField(
-                  decoration: InputDecoration(
-                      icon: Icon(Icons.mail_outline_outlined),
-                      labelText: 'Email'
+                  TextFormField(
+                    controller: _emailController,
+                    decoration: InputDecoration(
+                        icon: Icon(Icons.mail_outline_outlined),
+                        labelText: 'Email'
+                    ),
+                    validator: (String value){
+                      if (value.isEmpty){
+                        return 'Please enter some text';
+                      }else{
+                        return null;
+                      }
+                    },
                   ),
-                ),
-                TextFormField(
-                  decoration: InputDecoration(
-                      icon: Icon(Icons.vpn_key),
-                      labelText: 'Password'
+                  TextFormField(
+                    controller: _passwordController,
+                    decoration: InputDecoration(
+                        icon: Icon(Icons.vpn_key),
+                        labelText: 'Password'
+                    ),
+                    validator: (String value){
+                      if (value.length<4) {
+                        return 'Please enter some text';
+                      }else{
+                        return null;
+                      }
+                    },
                   ),
-                ),
-                TextFormField(
-                  decoration: InputDecoration(
-                      icon: Icon(Icons.vpn_key_sharp),
-                      labelText: 'Confirm Password'
-                  ),
-                ),
-                SizedBox(height: 20,),
-                RaisedButton(
-                    onPressed: (){},
-                  child: Text('Enter'),
-                    )
-              ],
+
+                  SizedBox(height: 20,),
+                  RaisedButton(
+                    onPressed: () async{
+                      if (_formKey.currentState.validate()){
+                        _firestore.collection("users:").add(
+                          {
+                            "name": _fullName.text,
+                            "age": _sex.text,
+                            "email": _emailController.text,
+                            'password' : _passwordController.text
+                          }
+                        ).then((value) => print(value.documentID));
+                      };
+                      _register();
+                    },
+                    child: Text('Enter'),
+                  )
+                ],
+              ),
             ),
           ),
         ),
       ),
     );
   }
+  void _register() async{
+    final FirebaseUser user = (await _auth.createUserWithEmailAndPassword(email: _emailController.text, password: _passwordController.text)).user;
+    if (user!=null) {
+      setState(() {
+        Navigator.push(context, MaterialPageRoute(builder: (context)=>FirstScreen()));
+        _success = true;
+        _userEmail = user.email;
+      });
+    }
+  }
+
+
+  Future<void> addData(){
+
+  }
+
+
+
+  void dispose(){
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+
 }
